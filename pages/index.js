@@ -1,3 +1,5 @@
+// pages/index.js
+
 import { useEffect, useState } from 'react';
 import LaunchTable from '../components/LaunchTable';
 
