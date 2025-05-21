@@ -1,35 +1,79 @@
 // pages/api/launches.js
 
-import { scoreLaunch } from '../../lib/scoreEngine';
+import fetch from 'node-fetch';
+
+const BITQUERY_API_URL = 'https://graphql.bitquery.io/';
+const BITQUERY_API_KEY = process.env.BITQUERY_API_KEY;
 
 export default async function handler(req, res) {
+  // Fetch tokens created in the last 10 minutes
+  const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+
+  const graphqlQuery = {
+    query: `
+      query ($since: ISO8601DateTime!) {
+        solana {
+          instructions(
+            where: {
+              instruction: {
+                program: { name: { is: "pump" }, method: { is: "create" } }
+              }
+              block: { time: { since: $since } }
+            }
+          ) {
+            instruction {
+              accounts {
+                token {
+                  mint
+                  symbol
+                  name
+                }
+              }
+            }
+            transaction {
+              signature
+            }
+          }
+        }
+      }
+    `,
+    variables: { since: tenMinsAgo },
+  };
+
   try {
-    // Try fetching real launches from Pump.fun
-    const response = await fetch('https://api.pump.fun/v1/launches/recent');
-    if (!response.ok) {
-      console.warn(`Pump.fun fetch failed: ${response.status} ${response.statusText}`);
-      // Fallback sample data (adjust this array to show more coins)
-      const sample = [
-        { id: '1', name: 'MOONSHOT',  score: scoreLaunch({ liquidity_usd:  1000, total_supply:   500 }) },
-        { id: '2', name: 'LAUNCHPAD', score: scoreLaunch({ liquidity_usd:  2000, total_supply:   100 }) },
-        { id: '3', name: 'FARTCOIN',  score: scoreLaunch({ liquidity_usd:   100, total_supply: 10000 }) },
-      ];
-      return res.status(200).json(sample);
+    const response = await fetch(BITQUERY_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': BITQUERY_API_KEY,
+      },
+      body: JSON.stringify(graphqlQuery),
+    });
+    const { data, errors } = await response.json();
+
+    if (errors) {
+      console.error('Bitquery errors:', errors);
+      return res.status(500).json({ error: 'Error fetching from Bitquery' });
     }
 
-    // Parse and score real data
-    const data = await response.json();
-    const items = Array.isArray(data.items) ? data.items : [];
-    const scored = items.map(item => ({
-      id:    item.id.toString(),
-      name:  item.name,
-      score: scoreLaunch(item),
-    }));
+    // Map each create‐instruction to a row
+    const launches = data.solana.instructions.map((ins) => {
+      const acct = ins.instruction.accounts[0]?.token || {};
+      return {
+        id: ins.transaction.signature,
+        name: acct.symbol || acct.name || acct.mint,
+        // Compute a dummy risk score by hashing the mint and mod 100,
+        // or replace with your real scoreLaunch logic if you prefer
+        score: Math.floor(
+          Array.from(acct.mint || '')
+            .reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 100
+        ) + 1,
+      };
+    });
 
-    return res.status(200).json(scored);
+    return res.status(200).json(launches);
   } catch (err) {
-    console.error('Error in /api/launches:', err);
-    // On exception, return an empty array (or reuse sample if you prefer)
-    return res.status(200).json([]);
+    console.error('API error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
