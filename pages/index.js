@@ -7,6 +7,7 @@ export default function Home() {
   const [launches, setLaunches] = useState([]);
 
   useEffect(() => {
+    // fetch data every 5 seconds
     async function load() {
       try {
         const res = await fetch('/api/launches');
@@ -16,8 +17,8 @@ export default function Home() {
         } else {
           console.error('Invalid API response:', data);
         }
-      } catch (e) {
-        console.error('Fetch error:', e);
+      } catch (err) {
+        console.error('Fetch error:', err);
       }
     }
     load();
@@ -26,8 +27,10 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl mb-4">$FML Rugpull Detector</h1>
+    <div style={{ padding: '1rem', fontFamily: 'sans-serif' }}>
+      <h1 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
+        $FML Rugpull Detector
+      </h1>
       <LaunchTable data={launches} />
     </div>
   );
