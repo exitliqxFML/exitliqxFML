@@ -10,20 +10,39 @@ export default function LaunchTable({ data }) {
       }}
     >
       <thead>
-        <tr style={{ background: '#f3f4f6' }}>
-          <th style={{ textAlign: 'left', padding: '8px', border: '1px solid #ddd' }}>
-            Name
-          </th>
-          <th style={{ textAlign: 'left', padding: '8px', border: '1px solid #ddd' }}>
-            Risk Score
-          </th>
+        <tr style={{ background: '#1a1a1a' }}>
+          {['Name', 'Risk Score'].map((h) => (
+            <th
+              key={h}
+              style={{
+                textAlign: 'left',
+                padding: '12px',
+                border: `1px solid var(--neon)`,
+                color: 'var(--neon)',
+              }}
+            >
+              {h}
+            </th>
+          ))}
         </tr>
       </thead>
       <tbody>
         {data.map((item) => (
-          <tr key={item.id} style={{ borderBottom: '1px solid #eee', hover: { background: '#fafafa' } }}>
-            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.name}</td>
-            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.score}</td>
+          <tr
+            key={item.id}
+            style={{
+              borderBottom: `1px solid var(--neon)`,
+              transition: 'background 0.2s ease',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#262626')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          >
+            <td style={{ padding: '12px', border: `1px solid var(--neon)` }}>
+              {item.name}
+            </td>
+            <td style={{ padding: '12px', border: `1px solid var(--neon)` }}>
+              {item.score}
+            </td>
           </tr>
         ))}
       </tbody>
