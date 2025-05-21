@@ -1,5 +1,3 @@
-// pages/index.js
-
 import { useEffect, useState } from 'react';
 import LaunchTable from '../components/LaunchTable';
 
@@ -7,7 +5,6 @@ export default function Home() {
   const [launches, setLaunches] = useState([]);
 
   useEffect(() => {
-    // fetch data every 5 seconds
     async function load() {
       try {
         const res = await fetch('/api/launches');
@@ -21,6 +18,7 @@ export default function Home() {
         console.error('Fetch error:', err);
       }
     }
+
     load();
     const iv = setInterval(load, 5000);
     return () => clearInterval(iv);
