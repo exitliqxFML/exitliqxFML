@@ -1,5 +1,5 @@
 // pages/api/launches.js
-
+console.log('Using token:', process.env.PUMP_FUN_API_TOKEN);
 import fetch from 'node-fetch';
 
 const BITQUERY_API_URL = 'https://graphql.bitquery.io/';
